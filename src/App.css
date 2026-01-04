@@ -1,0 +1,536 @@
+/* ✅ 높이 안정화: 레이아웃 계산(특히 min-height, sticky 등)이 깔끔해짐 */
+html, body, #root { height: 100%; }
+
+/* ---------------------------------------------------------
+   :root 변수들
+   - 색 바꾸고 싶으면 여기만 만지면 전체 톤이 바뀜
+   - --accent / --accent2 = 대표 포인트 컬러(그라디언트)
+--------------------------------------------------------- */
+:root {
+  --bg: #0b0c10; /* ✅ 페이지 기본 배경색(가장 어두운 바탕) */
+
+  /* 반투명 패널 계열:
+     - 카드 배경/hover 배경/유리 느낌에 사용
+     - 숫자(알파)를 올리면 더 진해지고, 내리면 더 투명해짐 */
+  --panel: rgba(255, 255, 255, 0.06);
+  --panel-strong: rgba(255, 255, 255, 0.10);
+
+  /* 테두리:
+     - 0.10 → 더 강하게 하고 싶으면 0.14~0.18 추천 */
+  --border: rgba(255, 255, 255, 0.10);
+
+  /* 글자색 계열:
+     - --text: 기본 본문 글자
+     - --muted: 보조 설명(회색)
+     - --muted2: 더 약한 회색(라벨, 힌트 등) */
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.65);
+  --muted2: rgba(255, 255, 255, 0.50);
+
+  /* 포인트 컬러:
+     - title 강조, 버튼 그라디언트, 블러 장식 등에서 사용
+     - 여기만 바꾸면 전체 분위기 바로 바뀜 */
+  --accent: #7c5cff;  /* 보라 */
+  --accent2: #00d4ff; /* 하늘 */
+
+  --good: #22c55e; /* 체크 아이콘 초록 */
+
+  /* 글자 렌더링(가독성/부드러움) */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+
+/* ---------------------------------------------------------
+   body 배경
+   - radial-gradient 2개 + 단색 bg
+   - 블러/그라디언트 위치 바꾸면 분위기 크게 바뀜
+--------------------------------------------------------- */
+body {
+  margin: 0;
+  background:
+    radial-gradient(1000px 600px at 20% 10%, rgba(124, 92, 255, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 80% 30%, rgba(0, 212, 255, 0.12), transparent 55%),
+    var(--bg);
+
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR",
+    "Apple SD Gothic Neo", Arial, "Helvetica Neue", sans-serif;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.app { min-height: 100vh; }
+
+/* =========================================================
+   컨테이너 2종류
+
+   1) .container (1100px) : 본문(About/Projects/Contact) 가독성
+      - 너무 넓으면 글이 길어져 읽기 불편해짐
+
+   2) .heroContainer (1280px) : Hero는 시원하게
+      - 여기 max-width를 키우면 "더 꽉 차는 느낌"
+      - 줄이면 "더 컴팩트한 느낌"
+========================================================= */
+.container {
+  max-width: 1440px;
+  margin: 0 auto;      /* 중앙 정렬 */
+  padding: 0 72px;     /* 좌우 여백 */
+}
+
+.heroContainer {
+  max-width: 1000px;   /* ✅ Hero만 넓게 */
+  margin: 0 auto;
+  padding: 0 42px;
+}
+
+/* ---------------------------------------------------------
+   섹션 점프 시 sticky nav에 가림 방지
+   - nav 높이가 60~70px대라서 76px로 잡음
+   - 네비 높이 바꾸면 여기도 같이 조절하면 됨
+--------------------------------------------------------- */
+.section { scroll-margin-top: 76px; }
+
+/* =========================================================
+   NAV (상단)
+   - sticky로 고정
+   - backdrop-filter로 유리 느낌
+========================================================= */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  backdrop-filter: blur(10px);
+  background: rgba(11, 12, 16, 0.65);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav__inner {
+  padding: 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 로고 왼쪽, 메뉴 오른쪽 */
+  gap: 16px;
+}
+
+/* 로고 */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand__dot { color: var(--accent2); font-size: 16px; }
+.brand__text { opacity: 0.95; font-size: 14px; }
+
+/* 메뉴 */
+.menu { display: flex; gap: 8px; }
+
+.menu__link {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  border: 1px solid transparent;
+  transition: 0.18s ease;
+}
+
+.menu__link:hover {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* =========================================================
+   MAIN
+   - 가장 중요한 규칙: main에는 max-width 걸지 말 것!
+   - main이 좁아지면 전체가 "안 차는 느낌"으로 보임
+========================================================= */
+.main {
+  width: 100%;
+  padding: 24px 0 70px;
+}
+
+/* =========================================================
+   HERO WRAP
+   - Hero 배경/여백 담당 (full width)
+========================================================= */
+.heroWrap {
+  width: 100%;
+  padding: 26px 0 10px;
+}
+
+/* ---------------------------------------------------------
+   HERO GRID (좌/우 2열)
+   - grid-template-columns를 1fr 1fr로 둬야 밸런스가 맞음
+   - gap을 키우면 "시원한 느낌" / 줄이면 "컴팩트"
+--------------------------------------------------------- */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* ✅ 균형 */
+  gap: 64px;                      /* ✅ 좌우 간격: 더 넓으면 시원 */
+  align-items: center;
+}
+
+/* 모바일에서는 1열 */
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+
+/* ---------------------------------------------------------
+   HERO LEFT
+   - 텍스트 줄 길이(가독성) 제어
+   - max-width를 키우면 글이 길어지고, 줄이면 더 깔끔해짐
+--------------------------------------------------------- */
+.hero__left {
+  max-width: 560px;
+}
+
+/* 큰 화면에서 "너무 왼쪽에 붙어 보이는 느낌"을 줄이기 위해
+   왼쪽 블록을 살짝 중앙쪽으로 당김 */
+@media (min-width: 1280px) {
+  .hero__left { margin-left: auto; }
+}
+
+/* ---------------------------------------------------------
+   HERO RIGHT
+   - justify-self: end → 카드가 오른쪽에 자리 잡음(균형)
+   - 이게 없으면 카드가 중앙에 떠 보이면서 왼쪽 쏠림이 심해짐
+--------------------------------------------------------- */
+.hero__right {
+  position: relative;
+  min-height: 320px;
+  justify-self: end;
+}
+
+/* 배지(작은 캡슐) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.03);
+}
+
+/* ---------------------------------------------------------
+   title (메인 타이틀)
+   - clamp(min, preferred, max)
+   - 화면이 커질수록 폰트가 자연스럽게 커짐
+   - max 값을 올리면 초대형 화면에서 더 크고 웅장해짐
+--------------------------------------------------------- */
+.title {
+  margin: 14px 0 0;
+  font-size: clamp(34px, 3.4vw, 64px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+/* 타이틀 강조 텍스트(그라디언트) */
+.title__accent {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 54ch; /* 글자 기준 줄 길이 */
+}
+
+/* CTA 버튼 그룹 */
+.cta {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 버튼 기본 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 13px;
+  transition: 0.18s ease;
+}
+
+/* 주요 버튼(그라디언트) */
+.btn--primary {
+  background: linear-gradient(90deg, rgba(124,92,255,0.95), rgba(0,212,255,0.85));
+  border-color: rgba(255,255,255,0.10);
+  color: #0b0c10;
+}
+
+.btn--primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+/* 보조 버튼 */
+.btn--ghost { background: rgba(255,255,255,0.03); color: var(--text); }
+.btn--ghost:hover { background: var(--panel); }
+
+/* 퀵 링크 */
+.quick {
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.quick__item {
+  font-size: 13px;
+  color: var(--muted2);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  padding-bottom: 2px;
+  transition: 0.18s ease;
+}
+
+.quick__item:hover { color: var(--text); border-bottom-color: rgba(255,255,255,0.45); }
+
+/* ---------------------------------------------------------
+   카드(.card)
+   - width를 키우면 오른쪽 무게가 커져서 '왼쪽 쏠림'이 줄어듦
+   - 작게 하면 왼쪽 타이틀이 압도해서 왼쪽으로 치우쳐 보임
+--------------------------------------------------------- */
+.card {
+  position: relative;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 22px;
+  padding: 18px;
+  overflow: hidden;
+
+  /* ✅ 카드 폭 조절 포인트 */
+  width: min(560px, 100%);
+}
+
+.card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card__title { margin: 0; font-size: 14px; letter-spacing: -0.01em; }
+
+/* pill(작은 캡슐 라벨) */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+}
+
+.pill--blue { border-color: rgba(0,212,255,0.35); }
+.pill--green { border-color: rgba(34,197,94,0.35); }
+
+/* 체크 리스트 */
+.list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.list__item {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 10px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.list__bullet {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: rgba(34,197,94,0.12);
+  color: var(--good);
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.muted {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted2);
+  line-height: 1.45;
+}
+
+.card__bottom {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+/* 칩(태그) */
+.mini__label {
+  font-size: 11px;
+  color: var(--muted2);
+  margin-bottom: 8px;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.chip {
+  font-size: 11px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.82);
+}
+
+.chip--dim {
+  background: rgba(255,255,255,0.02);
+  color: rgba(255,255,255,0.70);
+}
+
+/* =========================================================
+   SECTION (About/Projects/Contact)
+========================================================= */
+.section { margin-top: 40px; padding-top: 10px; }
+
+.section__head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.section__title { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
+
+.section__desc {
+  margin-top: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 80ch;
+}
+
+.section__hint { margin: 0; font-size: 12px; color: var(--muted2); }
+
+/* 프로젝트 카드 그리드 */
+.grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+.pcard {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.pcard__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pcard__title { margin: 0; font-size: 15px; }
+
+.pcard__desc { margin: 10px 0 0; color: var(--muted); line-height: 1.6; }
+
+.pcard__links { margin-top: 12px; display: flex; gap: 14px; }
+
+/* 링크 스타일 */
+.link {
+  font-size: 13px;
+  color: rgba(255,255,255,0.80);
+  border-bottom: 1px solid rgba(255,255,255,0.22);
+  padding-bottom: 2px;
+  transition: 0.18s ease;
+}
+
+.link:hover { color: var(--text); border-bottom-color: rgba(255,255,255,0.45); }
+
+/* 컨택트 박스 */
+.contact {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  max-width: 520px;
+}
+
+.contact__item {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.contact__label { font-size: 11px; color: var(--muted2); margin-bottom: 6px; }
+.contact__value { font-size: 13px; color: rgba(255,255,255,0.84); }
+
+/* 푸터 */
+.footer {
+  margin-top: 50px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  font-size: 12px;
+  color: var(--muted2);
+}
+
+/* =========================================================
+   장식용 blob (배경 블러)
+   - 위치 바꾸면 분위기 100% 달라짐
+   - opacity 낮추면 더 고급스러워지고, 높이면 더 화려해짐
+========================================================= */
+.blob {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  filter: blur(40px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* 오른쪽 상단 보라 */
+.blob--1 {
+  right: -90px;
+  top: -70px;
+  background: radial-gradient(circle at 30% 30%, rgba(124,92,255,0.80), transparent 55%);
+}
+
+/* 왼쪽 하단 파랑 */
+.blob--2 {
+  left: -110px;
+  bottom: -110px;
+  background: radial-gradient(circle at 40% 40%, rgba(0,212,255,0.70), transparent 55%);
+}
