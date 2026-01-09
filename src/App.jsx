@@ -103,7 +103,7 @@ export default function App() {
 
                   <a
                     className="quick__item"
-                    href="https://almond-comfort-a8a.notion.site/2-237fef49d8d5804d9a4dee1101d09a15"
+                    href="https://www.notion.so"
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -313,7 +313,7 @@ export default function App() {
                 <div className="contact__label">Blog</div>
                 <a
                   className="contact__value link"
-                  href=""
+                  href="https://www.notion.so"
                   target="_blank"
                   rel="noreferrer"
                 >
