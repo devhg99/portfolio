@@ -313,7 +313,7 @@ export default function App() {
                 <div className="contact__label">Blog</div>
                 <a
                   className="contact__value link"
-                  href="https://www.notion.so"
+                  href=""
                   target="_blank"
                   rel="noreferrer"
                 >
